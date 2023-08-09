@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react'
+import React, {useEffect, useRef, useState} from 'react'
 import Stack from '@mui/material/Stack';
 import Paper from '@mui/material/Paper';
 import Tabs from '@mui/material/Tabs';
@@ -7,12 +7,17 @@ import TabList from '@mui/lab/TabList';
 import TabPanel from '@mui/lab/TabPanel';
 import TabContext from '@mui/lab/TabContext';
 import video from '../assets/testInterpreterApp.mp4'
+import { GetObjectCommand} from "@aws-sdk/client-s3";
+import {s3Client} from '../S3Client'
+
+
 
 
 function Assignment() {
   const [MenuValue, setMenuValue] = React.useState(0);
   const [mediaRecorder, setMediaRecorder] = useState(null);
   // const [recordedChunks, setRecordedChunks] = useState([]);
+  const videoURL= useRef(null);
   const recordedChunks = useRef([]);
   console.log("chucks", recordedChunks)
   const videoRef = useRef(null);
@@ -89,6 +94,25 @@ function Assignment() {
     a.click();
   };
 
+   useEffect(() => {
+   async function fetchVideo(){
+     const command = new GetObjectCommand({
+      Bucket: "interpreterappbucket",
+      Key: "testInterpreterApp.mp4"
+    });
+     try {
+    const response = await s3Client.send(command);
+    // The Body object also has 'transformToByteArray' and 'transformToWebStream' methods.
+    const videoBlob = new Blob([response.Body], { type: "video/mp4" });
+    console.log(videoBlob)
+    videoURL.current = URL.createObjectURL(videoBlob);
+  } catch (err) {
+    console.error(err);
+  }
+}
+fetchVideo()
+  }, []);
+
   return (
     <div>
      <h3 className='assignmentTitle'>Assigment title</h3>
@@ -96,8 +120,7 @@ function Assignment() {
    
       <div>
       
-        <video width="320" height="240" controls autoPlay>
-        <source src={video} type="video/mp4"></source>
+        <video ref={videoURL.current} width="320" height="240" controls autoPlay>
         item 1
         </video >
         <video
